@@ -43,13 +43,14 @@ NCE.prototype.issueCommand = function(cmd,responseSize,callback) {
 	
 	self.response = new Buffer(0);
 	self.expectedResponseLength = responseSize;
-	self.sp.write(cmd);
 	
 	self.once('response', function () {
 		if (typeof(callback) === 'function') {
 			callback(self.response);
 		}
 	});
+
+	self.sp.write(cmd);
 }
 
 NCE.prototype.getVersion = function(callback) {
