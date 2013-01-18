@@ -1,0 +1,18 @@
+{
+  "name": "nce",
+  "version": "0.0.0",
+  "description": "NCE command station protocol",
+  "main": "nce.js",
+  "dependencies": {
+    "hexy": "~0.2.5",
+    "serialport": "~1.0.8"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": "",
+  "author": "",
+  "license": "MIT",
+  "readmeFilename": "README.md"
+}
