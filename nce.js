@@ -63,7 +63,7 @@ NCE.prototype.nop = function(callback) {
 
 
 
-var cmdStation = new NCE("/dev/tty.usbmodem1411", function (err) {
+var cmdStation = new NCE("/dev/cu.SLAB_USBtoUART", function (err) {
 	if (err !== undefined) {
 		console.error("Failed to initialize: " + err);
 		process.exit(1);
