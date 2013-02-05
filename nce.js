@@ -1,7 +1,7 @@
 var EventEmitter = require('events').EventEmitter,
 	util = require('util');
-	SerialPort = require('serialport').SerialPort,
-	hexy = require('hexy');
+	SerialPort = require('serialport').SerialPort;
+
 
 var	NCE = function(devicePath, callback) {
 	var self = this;
@@ -38,6 +38,8 @@ util.inherits(NCE, EventEmitter);
 NCE.prototype.issueCommand = function(cmd,responseSize,callback) {
 	var self = this;
 
+	// to do: add queuing to avoid overrunning commands
+
 	self.emit('SEND',cmd);	// debugging
 	
 	self.response = new Buffer(0);
@@ -52,13 +54,40 @@ NCE.prototype.issueCommand = function(cmd,responseSize,callback) {
 	self.sp.write(cmd);
 }
 
-NCE.prototype.getVersion = function(callback) {
-	this.issueCommand(new Buffer([0xAA]),3,callback)
-};
-
 NCE.prototype.nop = function(callback) {
 	this.issueCommand(new Buffer([0x80]),1,callback);
 };
+
+NCE.prototype.getVersion = function(callback) {
+	this.issueCommand(new Buffer([0xaa]),3,callback)
+};
+
+NCE.prototype.enterProgramTrackMode = function(callback) {
+	this.issueCommand(new Buffer([0x9e]),1,callback);
+};
+
+NCE.prototype.exitProgramTrackMode = function(callback) {
+	this.issueCommand(new Buffer([0x9f]),1,callback);
+};
+
+NCE.prototype.writeCV = function(cv,value,callback) {
+	// paged 0xa0; direct 0xa8
+	this.issueCommand(new Buffer([0xa0,((cv >> 8) & 0xff),(cv & 0x0ff),value]),1,callback);
+};
+
+NCE.prototype.readCV = function(cv,callback) {
+	// paged 0xa1; direct 0xa9
+	this.issueCommand(new Buffer([0xa1,((cv >> 8) & 0xff),(cv & 0x0ff)]),2,callback);
+};
+
+NCE.prototype.throttleCommand = function(address,op,data,callback) {
+	this.issueCommand(new Buffer([0xa2,((address >> 8) & 0xff),(address & 0x0ff),op,data]),1,callback);
+};
+
+NCE.prototype.accessoryCommand = function(address,op,data,callback) {
+	this.issueCommand(new Buffer([0xad,((address >> 8) & 0xff),(address & 0x0ff),op,data]),1,callback);
+};
+
 
 module.exports = {
     NCE: NCE
