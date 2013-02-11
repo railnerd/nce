@@ -34,10 +34,19 @@ cmdStation.on('ready', function () {
 		console.log("version response: "+ hexDump(vers));
 	});
 
+	// FL (headlight) on
+	cmdStation.throttleCommand(0xc076,7,(1<<4));
+
+	// Forward @ 64
 	cmdStation.throttleCommand(0xc076,4,64, function () {
-	
+
+		// Stop after 5 seconds	
 		setTimeout(function () {
+			// Stop
 			cmdStation.throttleCommand(0xc076,4,0);
+			// FL (headlight) off
+			cmdStation.throttleCommand(0xc076,7,0);
 		}, 5000);
+		
 	});
 });
