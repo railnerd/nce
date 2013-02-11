@@ -1,5 +1,5 @@
 var EventEmitter = require('events').EventEmitter,
-	util = require('util');
+	util = require('util'),
 	SerialPort = require('serialport').SerialPort;
 
 
