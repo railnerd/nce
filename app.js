@@ -19,19 +19,25 @@ cmdStation.on('RECV', function (data) {
     console.log("RECV : " + hexDump(data));
 });
 
+cmdStation.on('response', function (data) {
+    console.log("RESPONSE : " + hexDump(data));
+});
+
 cmdStation.on('SEND', function (data) {
     console.log("SEND : " + hexDump(data));
 });
 
 
 cmdStation.on('ready', function () {
-	console.log("hello, world.");
 
 	cmdStation.getVersion(function(vers) {
 		console.log("version response: "+ hexDump(vers));
+	});
 
-		cmdStation.throttleCommand(0xc076,4,0,function () {
-			console.log("hey!");
-		});
+	cmdStation.throttleCommand(0xc076,4,64, function () {
+	
+		setTimeout(function () {
+			cmdStation.throttleCommand(0xc076,4,0);
+		}, 5000);
 	});
 });

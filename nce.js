@@ -7,9 +7,9 @@ var	NCE = function(devicePath, callback) {
 	var self = this;
 	EventEmitter.call(self);
 
-	self.response = new Buffer(0);
-	self.expectedResponseLength = 0;
 	self.useDirectMode = false;
+	self.commandQueue = [];
+	self.currentCommand = null;
 	
 	self.sp = new SerialPort(devicePath, {baudrate: 9600});
 	self.sp.on('error', function(err) {
@@ -21,38 +21,59 @@ var	NCE = function(devicePath, callback) {
 		self.sp.on('data', function (data) {
 			self.emit('RECV',data);			// debugging
 
-			// be sure to handle response coming back in multiple chunks
-			self.response = Buffer.concat([self.response,data]);
+			if (self.currentCommand) {
+				// Handle response coming back in multiple chunks
+				self.currentCommand.responseBuffer = Buffer.concat([self.currentCommand.responseBuffer,data]);
 
-			if (self.response.length === self.expectedResponseLength) {
-				self.emit('response',self.response);
+				if (self.currentCommand.responseBuffer.length === self.currentCommand.expectedResponseLength) {
+					self.emit('response',self.currentCommand.responseBuffer);
+					
+					if (typeof self.currentCommand.callback === 'function')	{
+						self.currentCommand.callback(self.currentCommand.responseBuffer);
+					}
+
+					// switch to the next command in the queue
+					self.commandQueue.shift();
+					if (self.commandQueue[0] !== undefined) {
+						self.execCommand(self.commandQueue[0]);
+					}
+				}
 			}
 		});
 		
 		self.emit('ready');
 		callback();	// we're alive!
 	});
+
+	self.on('command', function(newCommand) {
+		self.commandQueue.push(newCommand);
+		if (newCommand === self.commandQueue[0]) {
+			self.execCommand(self.commandQueue[0]);
+		}
+	});
+	
 }
 util.inherits(NCE, EventEmitter);
 
 
-NCE.prototype.issueCommand = function(cmd,responseSize,callback) {
+NCE.prototype.execCommand = function (newCommand) {
 	var self = this;
-
-	// to do: add queuing to avoid overrunning commands
-
-	self.emit('SEND',cmd);	// debugging
 	
-	self.response = new Buffer(0);
-	self.expectedResponseLength = responseSize;
-	
-	self.once('response', function () {
-		if (typeof(callback) === 'function') {
-			callback(self.response);
-		}
-	});
+	self.currentCommand = newCommand;
+	self.emit('SEND',newCommand.command);
+	self.sp.write(newCommand.command);
+}
 
-	self.sp.write(cmd);
+NCE.prototype.issueCommand = function (cmd,responseSize,callback) {
+	var self = this;
+	var newCommand = {
+		command:cmd,
+		responseBuffer: new Buffer(0),
+		expectedResponseLength:responseSize,
+		callback:callback
+	};
+
+	self.emit('command',newCommand);
 }
 
 NCE.prototype.nop = function(callback) {
