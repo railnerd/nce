@@ -55,25 +55,21 @@ var	NCE = function(devicePath, callback) {
 }
 util.inherits(NCE, EventEmitter);
 
-
+// execCommand should not be called by clients
 NCE.prototype.execCommand = function (newCommand) {
-	var self = this;
-	
-	self.currentCommand = newCommand;
-	self.emit('SEND',newCommand.command);
-	self.sp.write(newCommand.command);
+	this.currentCommand = newCommand;
+	this.emit('SEND',newCommand.command);
+	this.sp.write(newCommand.command);
 }
 
 NCE.prototype.issueCommand = function (cmd,responseSize,callback) {
-	var self = this;
 	var newCommand = {
 		command:cmd,
 		responseBuffer: new Buffer(0),
 		expectedResponseLength:responseSize,
 		callback:callback
 	};
-
-	self.emit('command',newCommand);
+	this.emit('command',newCommand);
 }
 
 NCE.prototype.nop = function(callback) {
