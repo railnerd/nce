@@ -30,6 +30,8 @@ cmdStation.on('ready', function () {
 	cmdStation.getVersion(function(vers) {
 		console.log("version response: "+ hexDump(vers));
 
-		cmdStation.nop();
+		cmdStation.throttleCommand(0xc076,4,0,function () {
+			console.log("hey!");
+		});
 	});
 });
