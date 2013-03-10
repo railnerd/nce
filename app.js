@@ -35,17 +35,17 @@ cmdStation.on('ready', function () {
 	});
 
 	// FL (headlight) on
-	cmdStation.throttleCommand(0xc076,7,(1<<4));
+	cmdStation._throttleCommand(0xc076,7,(1<<4));
 
 	// Forward @ 64
-	cmdStation.throttleCommand(0xc076,4,64, function () {
+	cmdStation.setSpeedAndDirection(0xc076,64,true, function () {
 
 		// Stop after 5 seconds	
 		setTimeout(function () {
 			// Stop
-			cmdStation.throttleCommand(0xc076,4,0);
+			cmdStation.setSpeedAndDirection(0xc076,0,true);
 			// FL (headlight) off
-			cmdStation.throttleCommand(0xc076,7,0);
+			cmdStation._throttleCommand(0xc076,7,0);
 		}, 5000);
 		
 	});

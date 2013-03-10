@@ -170,12 +170,12 @@ NCE.prototype.readCV = function(cv,callback) {
 	this._issueCommand(new Buffer([(this._useDirectMode ? 0xa9 : 0xa1),((cv >> 8) & 0xff),(cv & 0x0ff)]),2,callback);
 };
 
-NCE.prototype.setTurnout = function(address, state) {
-	this._accessoryCommand(address, state ? 0x3 : 0x4);
+NCE.prototype.setTurnout = function(address, state, callback) {
+	this._accessoryCommand(address, state ? 0x3 : 0x4, callback);
 }
 
-NCE.prototype.setSpeedAndDirection = function(locoAddress, speed, direction) {
-	this._throttleCommand(locoAddress, direction ? 0x3 : 0x4, speed);
+NCE.prototype.setSpeedAndDirection = function(locoAddress, speed, direction, callback) {
+	this._throttleCommand(locoAddress, direction ? 0x03 : 0x04, speed, callback);
 }
 
 module.exports = {
