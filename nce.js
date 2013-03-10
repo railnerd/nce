@@ -2,14 +2,13 @@ var EventEmitter = require('events').EventEmitter,
 	util = require('util'),
 	SerialPort = require('serialport').SerialPort;
 
-
 var	NCE = function(devicePath, callback) {
 	var self = this;
 	EventEmitter.call(self);
 
-	self.useDirectMode = false;
-	self.commandQueue = [];
-	self.currentCommand = null;
+	self._useDirectMode = false;
+	self._commandQueue = [];
+	self._currentCommand = null;
 	
 	self.sp = new SerialPort(devicePath, {baudrate: 9600});
 	self.sp.on('error', function(err) {
@@ -21,21 +20,21 @@ var	NCE = function(devicePath, callback) {
 		self.sp.on('data', function (data) {
 			self.emit('RECV',data);			// debugging
 
-			if (self.currentCommand) {
+			if (self._currentCommand) {
 				// Handle response coming back in multiple chunks
-				self.currentCommand.responseBuffer = Buffer.concat([self.currentCommand.responseBuffer,data]);
+				self._currentCommand.responseBuffer = Buffer.concat([self._currentCommand.responseBuffer,data]);
 
-				if (self.currentCommand.responseBuffer.length === self.currentCommand.expectedResponseLength) {
-					self.emit('response',self.currentCommand.responseBuffer);
+				if (self._currentCommand.responseBuffer.length === self._currentCommand.expectedResponseLength) {
+					self.emit('response',self._currentCommand.responseBuffer);
 					
-					if (typeof self.currentCommand.callback === 'function')	{
-						self.currentCommand.callback(self.currentCommand.responseBuffer);
+					if (typeof self._currentCommand.callback === 'function')	{
+						self._currentCommand.callback(self._currentCommand.responseBuffer);
 					}
 
 					// switch to the next command in the queue
-					self.commandQueue.shift();
-					if (self.commandQueue[0] !== undefined) {
-						self.execCommand(self.commandQueue[0]);
+					self._commandQueue.shift();
+					if (self._commandQueue[0] !== undefined) {
+						self._execCommand(self._commandQueue[0]);
 					}
 				}
 			}
@@ -46,23 +45,23 @@ var	NCE = function(devicePath, callback) {
 	});
 
 	self.on('command', function(newCommand) {
-		self.commandQueue.push(newCommand);
-		if (newCommand === self.commandQueue[0]) {
-			self.execCommand(self.commandQueue[0]);
+		self._commandQueue.push(newCommand);
+		if (newCommand === self._commandQueue[0]) {
+			self._execCommand(self._commandQueue[0]);
 		}
 	});
 	
 }
 util.inherits(NCE, EventEmitter);
 
-// execCommand should not be called by clients
-NCE.prototype.execCommand = function (newCommand) {
-	this.currentCommand = newCommand;
+// _execCommand should not be called by clients
+NCE.prototype._execCommand = function (newCommand) {
+	this._currentCommand = newCommand;
 	this.emit('SEND',newCommand.command);
 	this.sp.write(newCommand.command);
 }
 
-NCE.prototype.issueCommand = function (cmd,responseSize,callback) {
+NCE.prototype._issueCommand = function (cmd,responseSize,callback) {
 	var newCommand = {
 		command:cmd,
 		responseBuffer: new Buffer(0),
@@ -72,37 +71,7 @@ NCE.prototype.issueCommand = function (cmd,responseSize,callback) {
 	this.emit('command',newCommand);
 }
 
-NCE.prototype.nop = function(callback) {
-	this.issueCommand(new Buffer([0x80]),1,callback);
-};
-
-NCE.prototype.getVersion = function(callback) {
-	this.issueCommand(new Buffer([0xaa]),3,callback)
-};
-
-NCE.prototype.enterProgramTrackMode = function(callback) {
-	this.issueCommand(new Buffer([0x9e]),1,callback);
-};
-
-NCE.prototype.exitProgramTrackMode = function(callback) {
-	this.issueCommand(new Buffer([0x9f]),1,callback);
-};
-
-NCE.prototype.enableDirectCV = function(useDirectMode) {
-	this.useDirectMode = useDirectMode;
-}
-
-NCE.prototype.writeCV = function(cv,value,callback) {
-	// paged 0xa0; direct 0xa8
-	this.issueCommand(new Buffer([(this.useDirectMode ? 0xa8 : 0xa0),((cv >> 8) & 0xff),(cv & 0x0ff),value]),1,callback);
-};
-
-NCE.prototype.readCV = function(cv,callback) {
-	// paged 0xa1; direct 0xa9
-	this.issueCommand(new Buffer([(this.useDirectMode ? 0xa9 : 0xa1),((cv >> 8) & 0xff),(cv & 0x0ff)]),2,callback);
-};
-
-NCE.prototype.throttleCommand = function(address,op,data,callback) {
+NCE.prototype._throttleCommand = function(address,op,data,callback) {
 /*
 	0xA2 sends speed or function packets to a locomotive.
 	Command Format: 0xA2 <addr_h> <addr_l> <op_1> <data_1>
@@ -138,10 +107,10 @@ NCE.prototype.throttleCommand = function(address,op,data,callback) {
 	1 = bad loco address
  */
 
-	this.issueCommand(new Buffer([0xa2,((address >> 8) & 0xff),(address & 0x0ff),op,data]),1,callback);
+	this._issueCommand(new Buffer([0xa2,((address >> 8) & 0xff),(address & 0x0ff),op,data]),1,callback);
 };
 
-NCE.prototype.accessoryCommand = function(address,op,data,callback) {
+NCE.prototype._accessoryCommand = function(address,op,data,callback) {
 /*
 	Command Format: 0xAD <addr_h> <addr_l> <op_1> <data_1>
 
@@ -167,9 +136,47 @@ NCE.prototype.accessoryCommand = function(address,op,data,callback) {
 	reserved 1 = bad accy address
  */
 
-	this.issueCommand(new Buffer([0xad,((address >> 8) & 0xff),(address & 0x0ff),op,data]),1,callback);
+	this._issueCommand(new Buffer([0xad,((address >> 8) & 0xff),(address & 0x0ff),op,data]),1,callback);
 };
 
+
+// Command station methods
+
+NCE.prototype.getVersion = function(callback) {
+	this._issueCommand(new Buffer([0xaa]),3,callback)
+};
+
+NCE.prototype.getOptions = function(callback) {
+	// return capabilities of the command station
+	callback({'hasProgrammingTrack':true, 'supportsDirectMode':true});
+}
+
+NCE.prototype.enterProgramTrackMode = function(useDirectMode, callback) {
+	this._useDirectMode = useDirectMode;
+	this._issueCommand(new Buffer([0x9e]),1,callback);
+};
+
+NCE.prototype.exitProgramTrackMode = function(callback) {
+	this._issueCommand(new Buffer([0x9f]),1,callback);
+};
+
+NCE.prototype.writeCV = function(cv,value,callback) {
+	// paged 0xa0; direct 0xa8
+	this._issueCommand(new Buffer([(this._useDirectMode ? 0xa8 : 0xa0),((cv >> 8) & 0xff),(cv & 0x0ff),value]),1,callback);
+};
+
+NCE.prototype.readCV = function(cv,callback) {
+	// paged 0xa1; direct 0xa9
+	this._issueCommand(new Buffer([(this._useDirectMode ? 0xa9 : 0xa1),((cv >> 8) & 0xff),(cv & 0x0ff)]),2,callback);
+};
+
+NCE.prototype.setTurnout = function(address, state) {
+	this._accessoryCommand(address, state ? 0x3 : 0x4);
+}
+
+NCE.prototype.setSpeedAndDirection = function(locoAddress, speed, direction) {
+	this._throttleCommand(locoAddress, direction ? 0x3 : 0x4, speed);
+}
 
 module.exports = {
     NCE: NCE
