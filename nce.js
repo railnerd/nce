@@ -28,7 +28,7 @@ var	NCE = function(devicePath, callback) {
 					self.emit('response',self._currentCommand.responseBuffer);
 					
 					if (typeof self._currentCommand.callback === 'function')	{
-						self._currentCommand.callback(self._currentCommand.responseBuffer);
+						self._currentCommand.callback(null,self._currentCommand.responseBuffer);
 					}
 
 					// switch to the next command in the queue
@@ -40,8 +40,9 @@ var	NCE = function(devicePath, callback) {
 			}
 		});
 		
+		// We're alive!
+		callback(null);
 		self.emit('ready');
-		callback();	// we're alive!
 	});
 
 	self.on('command', function(newCommand) {
