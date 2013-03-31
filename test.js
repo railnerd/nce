@@ -1,4 +1,4 @@
-var NCE = require('./nce').NCE,
+var NCE = require('./index').NCE,
 	hexy = require('hexy');
 
 var cmdStation = new NCE("/dev/cu.SLAB_USBtoUART", function (err) {
