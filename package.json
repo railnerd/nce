@@ -1,18 +1,30 @@
 {
   "name": "nce",
-  "version": "0.0.0",
-  "description": "NCE command station protocol",
-  "main": "nce.js",
+  "version": "0.0.1",
+  "author": "railnerd@me.com",
+  "description": "controlling model trains with node.js",
+  "main": "./index",
+  "keywords": [
+    "model railroad",
+    "nce",
+    "dcc",
+    "powercab"
+  ],
   "dependencies": {
-    "hexy": "~0.2.5",
-    "serialport": "~1.1.0"
+    "hexy": ">=0.2.5",
+    "serialport": ">=1.1.0"
   },
   "devDependencies": {},
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "node test.js"
   },
-  "repository": "",
-  "author": "",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/railnerd/nce.git"
+  },
+  "engines": {
+    "node": ">= 0.8.0"
+  },
   "license": "MIT",
-  "readmeFilename": "README.md"
+  "readmeFilename": "README.md",
 }
