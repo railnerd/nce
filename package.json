@@ -5,7 +5,7 @@
   "main": "nce.js",
   "dependencies": {
     "hexy": "~0.2.5",
-    "serialport": "~1.0.8"
+    "serialport": "~1.1.0"
   },
   "devDependencies": {},
   "scripts": {
