@@ -1,7 +1,7 @@
-var NCE = require('./index').NCE,
+var NCEDCC = require('./index').NCEDCC,
 	hexy = require('hexy');
 
-var cmdStation = new NCE("/dev/cu.SLAB_USBtoUART", function (err) {
+var cmdStation = new NCEDCC("/dev/cu.SLAB_USBtoUART", function (err) {
 	if (err) {
 		console.error("Failed to initialize: " + err);
 		process.exit(1);

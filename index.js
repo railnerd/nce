@@ -2,7 +2,7 @@ var EventEmitter = require('events').EventEmitter,
 	util = require('util'),
 	SerialPort = require('serialport').SerialPort;
 
-var	NCE = function(devicePath, callback) {
+var	NCEDCC = function(devicePath, callback) {
 	var self = this;
 	EventEmitter.call(self);
 
@@ -53,16 +53,16 @@ var	NCE = function(devicePath, callback) {
 	});
 	
 }
-util.inherits(NCE, EventEmitter);
+util.inherits(NCEDCC, EventEmitter);
 
 // _execCommand should not be called by clients
-NCE.prototype._execCommand = function (newCommand) {
+NCEDCC.prototype._execCommand = function (newCommand) {
 	this._currentCommand = newCommand;
 	this.emit('SEND',newCommand.command);
 	this.sp.write(newCommand.command);
 }
 
-NCE.prototype._issueCommand = function (cmd,responseSize,callback) {
+NCEDCC.prototype._issueCommand = function (cmd,responseSize,callback) {
 	var newCommand = {
 		command:cmd,
 		responseBuffer: new Buffer(0),
@@ -72,7 +72,7 @@ NCE.prototype._issueCommand = function (cmd,responseSize,callback) {
 	this.emit('command',newCommand);
 }
 
-NCE.prototype._throttleCommand = function(address,op,data,callback) {
+NCEDCC.prototype._throttleCommand = function(address,op,data,callback) {
 /*
 	0xA2 sends speed or function packets to a locomotive.
 	Command Format: 0xA2 <addr_h> <addr_l> <op_1> <data_1>
@@ -111,7 +111,7 @@ NCE.prototype._throttleCommand = function(address,op,data,callback) {
 	this._issueCommand(new Buffer([0xa2,((address >> 8) & 0xff),(address & 0x0ff),op,data]),1,callback);
 };
 
-NCE.prototype._accessoryCommand = function(address,op,data,callback) {
+NCEDCC.prototype._accessoryCommand = function(address,op,data,callback) {
 /*
 	Command Format: 0xAD <addr_h> <addr_l> <op_1> <data_1>
 
@@ -143,42 +143,42 @@ NCE.prototype._accessoryCommand = function(address,op,data,callback) {
 
 // Command station methods
 
-NCE.prototype.getVersion = function(callback) {
+NCEDCC.prototype.getVersion = function(callback) {
 	this._issueCommand(new Buffer([0xaa]),3,callback)
 };
 
-NCE.prototype.getOptions = function(callback) {
+NCEDCC.prototype.getOptions = function(callback) {
 	// return capabilities of the command station
 	callback({'hasProgrammingTrack':true, 'supportsDirectMode':true});
 }
 
-NCE.prototype.enterProgramTrackMode = function(useDirectMode, callback) {
+NCEDCC.prototype.enterProgramTrackMode = function(useDirectMode, callback) {
 	this._useDirectMode = useDirectMode;
 	this._issueCommand(new Buffer([0x9e]),1,callback);
 };
 
-NCE.prototype.exitProgramTrackMode = function(callback) {
+NCEDCC.prototype.exitProgramTrackMode = function(callback) {
 	this._issueCommand(new Buffer([0x9f]),1,callback);
 };
 
-NCE.prototype.writeCV = function(cv,value,callback) {
+NCEDCC.prototype.writeCV = function(cv,value,callback) {
 	// paged 0xa0; direct 0xa8
 	this._issueCommand(new Buffer([(this._useDirectMode ? 0xa8 : 0xa0),((cv >> 8) & 0xff),(cv & 0x0ff),value]),1,callback);
 };
 
-NCE.prototype.readCV = function(cv,callback) {
+NCEDCC.prototype.readCV = function(cv,callback) {
 	// paged 0xa1; direct 0xa9
 	this._issueCommand(new Buffer([(this._useDirectMode ? 0xa9 : 0xa1),((cv >> 8) & 0xff),(cv & 0x0ff)]),2,callback);
 };
 
-NCE.prototype.setTurnout = function(address, state, callback) {
+NCEDCC.prototype.setTurnout = function(address, state, callback) {
 	this._accessoryCommand(address, state ? 0x3 : 0x4, callback);
 }
 
-NCE.prototype.setSpeedAndDirection = function(locoAddress, speed, direction, callback) {
+NCEDCC.prototype.setSpeedAndDirection = function(locoAddress, speed, direction, callback) {
 	this._throttleCommand(locoAddress, direction ? 0x03 : 0x04, speed, callback);
 }
 
 module.exports = {
-    NCE: NCE
+    NCEDCC: NCEDCC
 };

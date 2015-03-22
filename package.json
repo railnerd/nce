@@ -1,12 +1,11 @@
 {
-  "name": "nce",
+  "name": "ncedcc",
   "version": "0.0.1",
   "author": "railnerd@me.com",
   "description": "controlling model trains with node.js",
   "main": "./index",
   "keywords": [
     "model railroad",
-    "nce",
     "dcc",
     "powercab"
   ],
