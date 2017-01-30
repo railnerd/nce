@@ -175,6 +175,10 @@ NCEDCC.prototype.setTurnout = function(address, state, callback) {
 	this._accessoryCommand(address, state ? 0x3 : 0x4, callback);
 }
 
+NCEDCC.prototype.setSignal = function(address, aspect, callback) {
+	this._accessoryCommand(address, 0x05, aspect, callback);
+}
+
 NCEDCC.prototype.setSpeedAndDirection = function(locoAddress, speed, direction, callback) {
 	this._throttleCommand(locoAddress, direction ? 0x03 : 0x04, speed, callback);
 }

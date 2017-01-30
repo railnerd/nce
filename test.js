@@ -45,6 +45,14 @@ cmdStation.on('ready', function () {
 			cmdStation.setSpeedAndDirection(0xc076,0,true);				// Stop
 			cmdStation._throttleCommand(0xc076,7,0);					// FL (headlight) off
 		}, 5000);
-		
+
 	});
+
+	// Set DCC Signal 1 Flashing Green
+	cmdStation.setSignal(1,5, function (err) {
+		setTimeout(function (err) {
+			cmdStation.setSignal(1,31);	// 	// Set DCC Signal 1 to Dark after 10 seconds
+		}, 10000);
+	});
+
 });
