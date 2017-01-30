@@ -1,6 +1,6 @@
 var EventEmitter = require('events').EventEmitter,
 	util = require('util'),
-	SerialPort = require('serialport').SerialPort;
+	SerialPort = require('serialport');
 
 var	NCEDCC = function(devicePath, callback) {
 	var self = this;
@@ -65,7 +65,7 @@ NCEDCC.prototype._execCommand = function (newCommand) {
 NCEDCC.prototype._issueCommand = function (cmd,responseSize,callback) {
 	var newCommand = {
 		command:cmd,
-		responseBuffer: new Buffer(0),
+		responseBuffer: Buffer.alloc(0),
 		expectedResponseLength:responseSize,
 		callback:callback
 	};
@@ -108,7 +108,7 @@ NCEDCC.prototype._throttleCommand = function(address,op,data,callback) {
 	1 = bad loco address
  */
 
-	this._issueCommand(new Buffer([0xa2,((address >> 8) & 0xff),(address & 0x0ff),op,data]),1,callback);
+	this._issueCommand(Buffer.from([0xa2,((address >> 8) & 0xff),(address & 0x0ff),op,data]),1,callback);
 };
 
 NCEDCC.prototype._accessoryCommand = function(address,op,data,callback) {
@@ -137,14 +137,14 @@ NCEDCC.prototype._accessoryCommand = function(address,op,data,callback) {
 	reserved 1 = bad accy address
  */
 
-	this._issueCommand(new Buffer([0xad,((address >> 8) & 0xff),(address & 0x0ff),op,data]),1,callback);
+	this._issueCommand(Buffer.from([0xad,((address >> 8) & 0xff),(address & 0x0ff),op,data]),1,callback);
 };
 
 
 // Command station methods
 
 NCEDCC.prototype.getVersion = function(callback) {
-	this._issueCommand(new Buffer([0xaa]),3,callback)
+	this._issueCommand(Buffer.from([0xaa]),3,callback)
 };
 
 NCEDCC.prototype.getOptions = function(callback) {
@@ -154,21 +154,21 @@ NCEDCC.prototype.getOptions = function(callback) {
 
 NCEDCC.prototype.enterProgramTrackMode = function(useDirectMode, callback) {
 	this._useDirectMode = useDirectMode;
-	this._issueCommand(new Buffer([0x9e]),1,callback);
+	this._issueCommand(Buffer.from([0x9e]),1,callback);
 };
 
 NCEDCC.prototype.exitProgramTrackMode = function(callback) {
-	this._issueCommand(new Buffer([0x9f]),1,callback);
+	this._issueCommand(Buffer.from([0x9f]),1,callback);
 };
 
 NCEDCC.prototype.writeCV = function(cv,value,callback) {
 	// paged 0xa0; direct 0xa8
-	this._issueCommand(new Buffer([(this._useDirectMode ? 0xa8 : 0xa0),((cv >> 8) & 0xff),(cv & 0x0ff),value]),1,callback);
+	this._issueCommand(Buffer.from([(this._useDirectMode ? 0xa8 : 0xa0),((cv >> 8) & 0xff),(cv & 0x0ff),value]),1,callback);
 };
 
 NCEDCC.prototype.readCV = function(cv,callback) {
 	// paged 0xa1; direct 0xa9
-	this._issueCommand(new Buffer([(this._useDirectMode ? 0xa9 : 0xa1),((cv >> 8) & 0xff),(cv & 0x0ff)]),2,callback);
+	this._issueCommand(Buffer.from([(this._useDirectMode ? 0xa9 : 0xa1),((cv >> 8) & 0xff),(cv & 0x0ff)]),2,callback);
 };
 
 NCEDCC.prototype.setTurnout = function(address, state, callback) {
