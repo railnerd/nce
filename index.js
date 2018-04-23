@@ -10,7 +10,7 @@ var	NCEDCC = function(devicePath, callback) {
 	self._commandQueue = [];
 	self._currentCommand = null;
 	
-	self.sp = new SerialPort(devicePath, {baudrate: 9600});
+	self.sp = new SerialPort(devicePath, {baudRate: 9600});
 	self.sp.on('error', function(err) {
 		callback(err);
 	});
