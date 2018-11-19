@@ -1,65 +1,65 @@
-var EventEmitter = require('events').EventEmitter,
-	util = require('util'),
-	SerialPort = require('serialport');
+var EventEmitter = require('events').EventEmitter
+var util = require('util')
+var SerialPort = require('serialport')
 
 var	NCEDCC = function(devicePath, callback) {
-	var self = this;
-	EventEmitter.call(self);
+	var self = this
+	EventEmitter.call(self)
 
-	self._useDirectMode = false;
-	self._commandQueue = [];
-	self._currentCommand = null;
+    self._useDirectMode = false
+    self._commandQueue = []
+	self._currentCommand = null
 	
-	self.sp = new SerialPort(devicePath, {baudRate: 9600});
+	self.sp = new SerialPort(devicePath, {baudRate: 9600})
 	self.sp.on('error', function(err) {
-		callback(err);
+		callback(err)
 	});
 	
 	self.sp.on('open', function() {
 
 		self.sp.on('data', function (data) {
-			self.emit('RECV',data);			// debugging
+			self.emit('RECV',data)			// debugging
 
 			if (self._currentCommand) {
 				// Handle response coming back in multiple chunks
-				self._currentCommand.responseBuffer = Buffer.concat([self._currentCommand.responseBuffer,data]);
+				self._currentCommand.responseBuffer = Buffer.concat([self._currentCommand.responseBuffer,data])
 
 				if (self._currentCommand.responseBuffer.length === self._currentCommand.expectedResponseLength) {
-					self.emit('response',self._currentCommand.responseBuffer);
+					self.emit('response',self._currentCommand.responseBuffer)
 					
 					if (typeof self._currentCommand.callback === 'function')	{
-						self._currentCommand.callback(null,self._currentCommand.responseBuffer);
+						self._currentCommand.callback(null,self._currentCommand.responseBuffer)
 					}
 
 					// switch to the next command in the queue
-					self._commandQueue.shift();
+					self._commandQueue.shift()
 					if (self._commandQueue[0] !== undefined) {
-						self._execCommand(self._commandQueue[0]);
+						self._execCommand(self._commandQueue[0])
 					}
 				}
 			}
-		});
+		})
 		
 		// We're alive!
-		callback(null);
-		self.emit('ready');
-	});
+		callback(null)
+		self.emit('ready')
+	})
 
 	self.on('command', function(newCommand) {
-		self._commandQueue.push(newCommand);
+		self._commandQueue.push(newCommand)
 		if (newCommand === self._commandQueue[0]) {
-			self._execCommand(self._commandQueue[0]);
+			self._execCommand(self._commandQueue[0])
 		}
-	});
+	})
 	
 }
-util.inherits(NCEDCC, EventEmitter);
+util.inherits(NCEDCC, EventEmitter)
 
 // _execCommand should not be called by clients
 NCEDCC.prototype._execCommand = function (newCommand) {
-	this._currentCommand = newCommand;
-	this.emit('SEND',newCommand.command);
-	this.sp.write(newCommand.command);
+	this._currentCommand = newCommand
+	this.emit('SEND',newCommand.command)
+	this.sp.write(newCommand.command)
 }
 
 NCEDCC.prototype._issueCommand = function (cmd,responseSize,callback) {
@@ -68,8 +68,8 @@ NCEDCC.prototype._issueCommand = function (cmd,responseSize,callback) {
 		responseBuffer: Buffer.alloc(0),
 		expectedResponseLength:responseSize,
 		callback:callback
-	};
-	this.emit('command',newCommand);
+	}
+	this.emit('command',newCommand)
 }
 
 NCEDCC.prototype._throttleCommand = function(address,op,data,callback) {
@@ -108,7 +108,7 @@ NCEDCC.prototype._throttleCommand = function(address,op,data,callback) {
 	1 = bad loco address
  */
 
-	this._issueCommand(Buffer.from([0xa2,((address >> 8) & 0xff),(address & 0x0ff),op,data]),1,callback);
+	this._issueCommand(Buffer.from([0xa2,((address >> 8) & 0xff),(address & 0x0ff),op,data]),1,callback)
 };
 
 NCEDCC.prototype._accessoryCommand = function(address,op,data,callback) {
@@ -137,7 +137,7 @@ NCEDCC.prototype._accessoryCommand = function(address,op,data,callback) {
 	reserved 1 = bad accy address
  */
 
-	this._issueCommand(Buffer.from([0xad,((address >> 8) & 0xff),(address & 0x0ff),op,data]),1,callback);
+	this._issueCommand(Buffer.from([0xad,((address >> 8) & 0xff),(address & 0x0ff),op,data]),1,callback)
 };
 
 
@@ -149,38 +149,38 @@ NCEDCC.prototype.getVersion = function(callback) {
 
 NCEDCC.prototype.getOptions = function(callback) {
 	// return capabilities of the command station
-	callback({'hasProgrammingTrack':true, 'supportsDirectMode':true});
+	callback({'hasProgrammingTrack':true, 'supportsDirectMode':true})
 }
 
 NCEDCC.prototype.enterProgramTrackMode = function(useDirectMode, callback) {
 	this._useDirectMode = useDirectMode;
-	this._issueCommand(Buffer.from([0x9e]),1,callback);
+	this._issueCommand(Buffer.from([0x9e]),1,callback)
 };
 
 NCEDCC.prototype.exitProgramTrackMode = function(callback) {
-	this._issueCommand(Buffer.from([0x9f]),1,callback);
+	this._issueCommand(Buffer.from([0x9f]),1,callback)
 };
 
 NCEDCC.prototype.writeCV = function(cv,value,callback) {
 	// paged 0xa0; direct 0xa8
-	this._issueCommand(Buffer.from([(this._useDirectMode ? 0xa8 : 0xa0),((cv >> 8) & 0xff),(cv & 0x0ff),value]),1,callback);
+	this._issueCommand(Buffer.from([(this._useDirectMode ? 0xa8 : 0xa0),((cv >> 8) & 0xff),(cv & 0x0ff),value]),1,callback)
 };
 
 NCEDCC.prototype.readCV = function(cv,callback) {
 	// paged 0xa1; direct 0xa9
-	this._issueCommand(Buffer.from([(this._useDirectMode ? 0xa9 : 0xa1),((cv >> 8) & 0xff),(cv & 0x0ff)]),2,callback);
+	this._issueCommand(Buffer.from([(this._useDirectMode ? 0xa9 : 0xa1),((cv >> 8) & 0xff),(cv & 0x0ff)]),2,callback)
 };
 
 NCEDCC.prototype.setTurnout = function(address, state, callback) {
-	this._accessoryCommand(address, state ? 0x3 : 0x4, callback);
+	this._accessoryCommand(address, state ? 0x3 : 0x4, callback)
 }
 
 NCEDCC.prototype.setSignal = function(address, aspect, callback) {
-	this._accessoryCommand(address, 0x05, aspect, callback);
+	this._accessoryCommand(address, 0x05, aspect, callback)
 }
 
 NCEDCC.prototype.setSpeedAndDirection = function(locoAddress, speed, direction, callback) {
-	this._throttleCommand(locoAddress, direction ? 0x03 : 0x04, speed, callback);
+	this._throttleCommand(locoAddress, direction ? 0x03 : 0x04, speed, callback)
 }
 
 module.exports = {
