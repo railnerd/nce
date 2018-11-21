@@ -29,7 +29,7 @@ cmdStation.on('SEND', function (data) {
 
 cmdStation.on('ready', function () {
   cmdStation.getVersion(function (_err, vers) {
-      console.log('version response: ' + hexDump(vers))
+    console.log('version response: ' + hexDump(vers))
   })
 
   console.log('FL (headlight) on')
